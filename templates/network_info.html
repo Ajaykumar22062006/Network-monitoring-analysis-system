@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-container">
+    <div>
+        <h1 class="page-title">IP Address Subnet Analysis</h1>
+        <p class="page-subtitle">Calculate address boundaries, host counts, and binary representations for any IPv4 subnet.</p>
+    </div>
+</div>
+
+<div class="split-layout">
+    <!-- Left Column: Input Form & Results Table -->
+    <div>
+        <!-- Input Panel -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg style="width:20px; height:20px; stroke: var(--accent-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4M12 8h.01"></path>
+                    </svg>
+                    Subnet Calculator
+                </h2>
+            </div>
+            
+            <form action="{{ url_for('network_info') }}" method="POST">
+                <div class="form-group">
+                    <label for="ip_address" class="form-label">IPv4 Address</label>
+                    <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="e.g., 192.168.10.25" value="{{ ip_address }}" required>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Standard dotted-decimal format (0-255).</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mask_or_cidr" class="form-label">Subnet Mask or CIDR Prefix</label>
+                    <input type="text" id="mask_or_cidr" name="mask_or_cidr" class="form-control" placeholder="e.g., 255.255.255.0 or 24" value="{{ mask_or_cidr }}" required>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Supports masks (e.g. 255.255.255.192) or prefix numbers (0 to 32).</span>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <a href="{{ url_for('network_info') }}" class="btn btn-secondary" style="flex: 1;">
+                        Clear
+                    </a>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">
+                        Calculate Subnet
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if result %}
+        <!-- Calculations Table Panel -->
+        <div class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+                <h3 class="panel-title">Subnet Boundary Calculations</h3>
+            </div>
+            
+            <table class="custom-table" style="font-size: 0.9rem;">
+                <tbody>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500; width: 45%;">IP Address</td>
+                        <td><code style="font-family: Courier; font-size: 0.95rem; color: var(--text-main);">{{ result.ip }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">CIDR Notation</td>
+                        <td><code style="font-family: Courier; font-size: 0.95rem; color: var(--accent-blue);">{{ result.cidr }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Subnet Mask</td>
+                        <td><code style="font-family: Courier; font-size: 0.95rem; color: var(--warning-color);">{{ result.subnet_mask }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Network Address</td>
+                        <td><code style="font-family: Courier; font-size: 0.95rem; color: var(--success-color);">{{ result.network_address }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Broadcast Address</td>
+                        <td><code style="font-family: Courier; font-size: 0.95rem; color: var(--danger-color);">{{ result.broadcast_address }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Usable Range</td>
+                        <td style="font-size: 0.85rem;">
+                            <code style="font-family: Courier; color: var(--info-color);">{{ result.first_usable }}</code>
+                            <span style="color: var(--text-muted);">to</span>
+                            <code style="font-family: Courier; color: var(--info-color);">{{ result.last_usable }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Total Addresses</td>
+                        <td><strong>{{ result.total_addresses }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Usable Hosts</td>
+                        <td>
+                            <span class="badge badge-online" style="font-size: 0.8rem; font-weight: 600;">
+                                {{ result.usable_hosts }} Hosts
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Address Class</td>
+                        <td>
+                            <span class="badge badge-type" style="font-weight: 600;">
+                                Class {{ result.address_class }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Binary Representation Panel -->
+        <div class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+                <h3 class="panel-title">Binary Representation (32-bit Octets)</h3>
+            </div>
+            
+            <div class="console-box" style="font-size: 0.8rem; line-height: 1.6; color: #38bdf8;">
+                <div class="console-header">
+                    <div class="console-dot red"></div>
+                    <div class="console-dot yellow"></div>
+                    <div class="console-dot green"></div>
+                    <span class="console-title">Binary Octet Viewer</span>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; font-family: inherit;">
+                    <tr>
+                        <td style="color: var(--text-muted); width: 25%; font-weight: 600;">IP Dec:</td>
+                        <td>{{ result.ip }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="color: #10b981; font-weight: 600;">IP Bin:</td>
+                        <td style="color: #10b981; letter-spacing: 0.5px;">{{ result.ip_binary }}</td>
+                    </tr>
+                    
+                    <tr style="margin-top: 5px;">
+                        <td style="color: var(--text-muted); font-weight: 600;">Mask Dec:</td>
+                        <td>{{ result.subnet_mask }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="color: var(--warning-color); font-weight: 600;">Mask Bin:</td>
+                        <td style="color: var(--warning-color); letter-spacing: 0.5px;">{{ result.mask_binary }}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 600;">Net Dec:</td>
+                        <td>{{ result.network_address }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="color: #a78bfa; font-weight: 600;">Net Bin:</td>
+                        <td style="color: #a78bfa; letter-spacing: 0.5px;">{{ result.network_binary }}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 600;">Broad Dec:</td>
+                        <td>{{ result.broadcast_address }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--danger-color); font-weight: 600;">Broad Bin:</td>
+                        <td style="color: var(--danger-color); letter-spacing: 0.5px;">{{ result.broadcast_binary }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Cisco Academy Reference Notes & Explanations -->
+    <div>
+        <!-- Terminology Guide -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg style="width:20px; height:20px; stroke: var(--accent-violet);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Subnetting Terminology Guide
+                </h2>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+                <div>
+                    <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Network Address</strong>
+                    <p>Identifies the subnet. All hosts on the same physical link share this prefix. It represents the subnet and is not assignable to devices.</p>
+                </div>
+                
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Broadcast Address</strong>
+                    <p>A special IP used to send messages to all active hosts in the subnet. Packets directed here are received by every host on the subnet. It cannot be assigned to hosts.</p>
+                </div>
+                
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">First & Last Usable Host</strong>
+                    <p>The boundary range of IPs that can be manually or dynamically (DHCP) assigned to end stations (e.g. PCs, routers, printers).</p>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Usable Hosts Tally</strong>
+                    <p>Calculated as <code>2<sup>(32 - prefix)</sup> - 2</code>. We subtract 2 because the Network Address and Broadcast Address are reserved and cannot be assigned to hosts.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subnet Table Examples -->
+        <div class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg style="width:20px; height:20px; stroke: var(--accent-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    Common Subnet Templates
+                </h2>
+            </div>
+            
+            <table class="custom-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>CIDR</th>
+                        <th>Subnet Mask</th>
+                        <th>Usable Host Capacity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/24</code></td>
+                        <td>255.255.255.0</td>
+                        <td><strong>254</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/25</code></td>
+                        <td>255.255.255.128</td>
+                        <td><strong>126</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/26</code></td>
+                        <td>255.255.255.192</td>
+                        <td><strong>62</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/27</code></td>
+                        <td>255.255.255.224</td>
+                        <td><strong>30</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/28</code></td>
+                        <td>255.255.255.240</td>
+                        <td><strong>14</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/29</code></td>
+                        <td>255.255.255.248</td>
+                        <td><strong>6</strong> hosts</td>
+                    </tr>
+                    <tr>
+                        <td><code>/30</code></td>
+                        <td>255.255.255.252</td>
+                        <td><strong>2</strong> hosts (WAN Links)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

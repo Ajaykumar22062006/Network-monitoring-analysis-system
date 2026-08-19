@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-container">
+    <div>
+        <h1 class="page-title">Device Inventory</h1>
+        <p class="page-subtitle">Add, edit, or remove nodes from the network monitoring database.</p>
+    </div>
+</div>
+
+<div class="split-layout">
+    <!-- Left Column: Add Device Form -->
+    <div class="panel-card" style="margin-bottom: 0;">
+        <div class="panel-header">
+            <h2 class="panel-title">
+                <svg style="width:20px; height:20px; stroke: var(--accent-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path>
+                </svg>
+                Register New Device
+            </h2>
+        </div>
+        
+        <form action="{{ url_for('add_device') }}" method="POST">
+            <div class="form-group">
+                <label for="name" class="form-label">Device Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="e.g., CoreRouter-01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="type" class="form-label">Device Type</label>
+                <select id="type" name="type" class="form-control" style="background-color: var(--bg-primary);" required>
+                    <option value="" disabled selected>Select Type...</option>
+                    <option value="Router">Router</option>
+                    <option value="Switch">Switch</option>
+                    <option value="Server">Server</option>
+                    <option value="PC">PC / Workstation</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ip_address" class="form-label">IPv4 Address</label>
+                <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="e.g., 192.168.1.1" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Standard dotted-decimal format (0-255).</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="mac_address" class="form-label">MAC Address</label>
+                <input type="text" id="mac_address" name="mac_address" class="form-control" placeholder="e.g., 00:11:22:33:44:55" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Physical address. Format: XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" name="location" class="form-control" placeholder="e.g., Server Room A, Rack 2" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Physical location of the device.</span>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Add to Database
+            </button>
+        </form>
+    </div>
+
+    <!-- Right Column: Current Devices Table -->
+    <div class="panel-card" style="margin-bottom: 0;">
+        <div class="panel-header">
+            <h2 class="panel-title">
+                <svg style="width:20px; height:20px; stroke: var(--accent-violet);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                Registered Nodes List
+            </h2>
+            <span class="badge badge-type">{{ devices|length }} Devices</span>
+        </div>
+
+        {% if not devices %}
+        <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <svg style="width: 40px; height: 40px; stroke: currentColor; opacity: 0.3; margin-bottom: 1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <p>Database is empty. Register a device using the form on the left.</p>
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>IP Address</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">{{ device.device_name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: Courier;">{{ device.mac_address }}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-type">{{ device.device_type }}</span>
+                        </td>
+                        <td>
+                            <code style="font-family: Courier; color: var(--info-color);">{{ device.ip_address }}</code>
+                        </td>
+                        <td>
+                            <span>{{ device.location }}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <!-- Edit Button -->
+                                <a href="{{ url_for('edit_device', device_id=device.id) }}" class="btn btn-secondary btn-sm btn-icon-only" title="Edit Device">
+                                    <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                                
+                                <!-- Delete Form -->
+                                <form action="{{ url_for('delete_device', device_id=device.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this device?');">
+                                    <button type="submit" class="btn btn-danger btn-sm btn-icon-only" title="Delete Device">
+                                        <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

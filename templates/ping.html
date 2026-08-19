@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-container">
+    <div>
+        <h1 class="page-title">Ping Connectivity Test</h1>
+        <p class="page-subtitle">Test network reachability to any IPv4 address using ICMP Echo Requests.</p>
+    </div>
+</div>
+
+<div class="split-layout">
+    <!-- Left Panel: Form & Quick Metrics -->
+    <div>
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg style="width:20px; height:20px; stroke: var(--accent-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Send ICMP Echo Request
+                </h2>
+            </div>
+            
+            <form action="{{ url_for('ping_tool') }}" method="POST">
+                <div class="form-group">
+                    <label for="ip_address" class="form-label">Target IPv4 Address</label>
+                    <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="e.g., 8.8.8.8 or 127.0.0.1" value="{{ ip_address }}" required>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Ensure the target device allows ICMP traffic (some firewalls block it).</span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Execute Ping
+                </button>
+            </form>
+        </div>
+
+        {% if result %}
+        <div class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+                <h3 class="panel-title">Triage Summary</h3>
+            </div>
+            
+            <table class="custom-table" style="font-size: 0.9rem;">
+                <tbody>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500; width: 40%;">Target Host</td>
+                        <td style="font-family: Courier; font-weight: 600;">{{ ip_address }}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Connection Status</td>
+                        <td>
+                            {% if result.status == 'Online' %}
+                            <span class="badge badge-online">
+                                <span class="badge-dot ping-pulse"></span> Online
+                            </span>
+                            {% else %}
+                            <span class="badge badge-offline">
+                                <span class="badge-dot ping-pulse-offline"></span> Offline / Unreachable
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Response Time</td>
+                        <td>
+                            <strong style="color: var(--info-color);">{{ result.response_time }}</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted); font-weight: 500;">Packet Loss</td>
+                        <td>
+                            <span class="badge {% if result.packet_loss == '0%' %}badge-online{% else %}badge-offline{% endif %}">
+                                {{ result.packet_loss }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Panel: Command Line Console Output -->
+    <div class="panel-card" style="display: flex; flex-direction: column; min-height: 380px;">
+        <div class="panel-header">
+            <h2 class="panel-title" style="color: var(--text-muted);">
+                <svg style="width:20px; height:20px; stroke: currentColor;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                    <path d="M6 10l2 2-2 2M11 14h5"></path>
+                </svg>
+                Terminal Output Console
+            </h2>
+        </div>
+        
+        <div class="console-box" style="flex-grow: 1; min-height: 250px;">
+            <div class="console-header">
+                <div class="console-dot red"></div>
+                <div class="console-dot yellow"></div>
+                <div class="console-dot green"></div>
+                <span class="console-title">ping.exe -t {{ ip_address if ip_address else '127.0.0.1' }}</span>
+            </div>
+            
+            {% if result %}
+                <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; color: #38bdf8;">{{ result.raw_output }}</pre>
+            {% else %}
+                <span style="color: rgba(255, 255, 255, 0.25); font-style: italic;">
+                    System ready. Input an IP address on the left and click "Execute Ping" to view diagnostic trace outputs.
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

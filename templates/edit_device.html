@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-container">
+    <div>
+        <h1 class="page-title">Edit Device</h1>
+        <p class="page-subtitle">Update device parameters in inventory.</p>
+    </div>
+</div>
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div class="panel-card">
+        <div class="panel-header">
+            <h2 class="panel-title">
+                <svg style="width:20px; height:20px; stroke: var(--accent-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Modify Connection Settings
+            </h2>
+        </div>
+        
+        <form action="{{ url_for('edit_device', device_id=device.id) }}" method="POST">
+            <div class="form-group">
+                <label for="name" class="form-label">Device Name</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ device.device_name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="type" class="form-label">Device Type</label>
+                <select id="type" name="type" class="form-control" style="background-color: var(--bg-primary);" required>
+                    <option value="Router" {% if device.device_type == 'Router' %}selected{% endif %}>Router</option>
+                    <option value="Switch" {% if device.device_type == 'Switch' %}selected{% endif %}>Switch</option>
+                    <option value="Server" {% if device.device_type == 'Server' %}selected{% endif %}>Server</option>
+                    <option value="PC" {% if device.device_type == 'PC' %}selected{% endif %}>PC / Workstation</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ip_address" class="form-label">IPv4 Address</label>
+                <input type="text" id="ip_address" name="ip_address" class="form-control" value="{{ device.ip_address }}" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Must be a valid IPv4 address structure.</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="mac_address" class="form-label">MAC Address</label>
+                <input type="text" id="mac_address" name="mac_address" class="form-control" value="{{ device.mac_address }}" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Physical hardware address structure (XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX).</span>
+            </div>
+
+            <div class="form-group">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" name="location" class="form-control" value="{{ device.location }}" required>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Physical location details.</span>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <a href="{{ url_for('devices_list') }}" class="btn btn-secondary" style="flex: 1;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
